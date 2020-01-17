@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 base_dir = os.getcwd()
 
 try:
-    site_name = "https://store.steampowered.com/login/?redir=login"
+    site_name = "https://store.steampowered.com/login/"
     project_name = "steam"
 except IndexError:
     print("Usage:\npython app.py www.example.com folder_name")
