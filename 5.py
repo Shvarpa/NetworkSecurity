@@ -40,7 +40,8 @@ class Cloner:
     generate a path from url
     """
     def pathGenerator(self, url):
-        return re.match("(https?://)?([^?]*)([?].*)?",url)[2]
+        path = re.match("(https?://)?([^?]*)([?].*)?",url)[2]
+        return path
     
     """
     generate links from site, and make copies of them in local dir
@@ -53,12 +54,15 @@ class Cloner:
             dest = self.pathGenerator(url)
 
             if not url.startswith("http"):
+                base = True
                 url = self.baseSite + url
+            else:
+                base = False
             data = self.download(url)
 
             print(f'link:{link}\n dest={dest}')
             self.save(data,dest)
-            link["href"] = "./" + dest
+            link["href"] = dest if not base else "/"+dest
 
         scripts = soup.find_all("script")
         for script in scripts:
@@ -68,11 +72,14 @@ class Cloner:
             dest = self.pathGenerator(url)
 
             if not url.startswith("http"):
+                base = True
                 url = self.baseSite + url
+            else:
+                base = False
             data = self.download(url)
             print(f'script:{script}\n dest={dest}')
             self.save(data,dest)
-            script["src"] = "./" + dest
+            script["src"] = dest if not base else "/"+dest
         
         with open(self.basePath + "/index.html", "w", encoding="utf-8") as file:
             file.write(str(soup))
@@ -83,8 +90,9 @@ class Cloner:
 #     cloner.clone()
 
 def main():
-    site = "https://friends.walla.co.il/login/"
-    cloner = Cloner(site,"walla")
+    # site = "https://friends.walla.co.il/login/"
+    site = "https://store.steampowered.com/login/"
+    cloner = Cloner(site,"steam")
     cloner.clone()
 
 if __name__=="__main__":
