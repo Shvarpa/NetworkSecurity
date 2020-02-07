@@ -8,7 +8,9 @@ parser.add_argument('--folder', default="fish", help='folder where to store site
 parser.add_argument('--email', required=True, help="email storeing fished info")
 parser.add_argument('--password', required=True, help="password for email")
 
+
 args = parser.parse_args()
+
 cloner = Cloner(args.site,args.folder)
 cloner.clone()
 

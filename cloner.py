@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from requests import Session,get
+from urllib.request import urlopen
 import os
 import re
 from time import sleep
@@ -23,6 +24,12 @@ class Cloner:
     """
     def download(self, url):
         return self.session.get(url).content
+
+    # """
+    # return file's data made from url
+    # """
+    # def download(self, url):
+    #     return urlopen(url).read()
 
     """
     create file from data and type of url in path
@@ -69,8 +76,11 @@ class Cloner:
             data = self.download(url)
 
             # print(f'link:{link}\n dest={dest}')
-            self.save(data,dest)
-            link["href"] = dest if not base else "/"+dest
+            try:
+                self.save(data,dest)
+                link["href"] = dest if not base else "/"+dest
+            except: 
+                pass
 
         items = soup.find_all(src=True)
         for item in items:
@@ -86,17 +96,31 @@ class Cloner:
                 base = False
             data = self.download(url)
             # print(f'script:{script}\n dest={dest}')
-            self.save(data,dest)
-            item["src"] = dest if not base else "/"+dest
+            try:
+                self.save(data,dest)
+                item["src"] = dest if not base else "/"+dest
+            except:
+                pass
         
         return str(soup)
 
     def findInputs(self,html):
         soup = BeautifulSoup(html, "html.parser")
+        forms = soup.find_all("form")
+
+        for form in forms:
+            if (hasattr(form,"method")):
+                del form["method"]
+            if (hasattr(form,"action")):
+                del form["action"]
+
         data = {}
+        
         inputs = soup.find_all("input",type="text") + soup.find_all("input",type="password")
         
         for inp in inputs:
+            if not inp.get("id",None):
+                continue
             name = inp["name"] if inp.get("name", None) else inp["id"]
             value = f"document.getElementById('{inp['id']}').value"
             data[name] = value

