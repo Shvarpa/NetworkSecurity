@@ -1,5 +1,5 @@
 import argparse
-from cloner import Cloner
+from src.cloner import Cloner
 from shutil import copyfile
 
 parser = argparse.ArgumentParser(description='Site cloner for fishing.')
@@ -14,7 +14,7 @@ args = parser.parse_args()
 cloner = Cloner(args.site,args.folder)
 cloner.clone()
 
-copyfile("./server.py","./"+args.folder+"/server.py")
+copyfile("./src/server.py","./"+args.folder+"/server.py")
 
 with open(f"./{args.folder}/.env", "w") as file:
     file.write(f"EMAIL={args.email}\nPASSWORD={args.password}")
