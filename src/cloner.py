@@ -53,7 +53,7 @@ class Cloner:
     generate a path from url
     """
     def pathGenerator(self, url):
-        path = re.match("(https?://)?([^?]*)([?].*)?",url)[2]
+        path = re.match("(https?://)?/?([^?]*)([?].*)?",url)[2]
         return path
     
     """
@@ -74,13 +74,12 @@ class Cloner:
             else:
                 base = False
             data = self.download(url)
-
             # print(f'link:{link}\n dest={dest}')
             try:
                 self.save(data,dest)
                 link["href"] = dest if not base else "/"+dest
             except: 
-                pass
+                print(f"failed at saving data from url:{url} at {dest}")
 
         items = soup.find_all(src=True)
         for item in items:
@@ -100,8 +99,7 @@ class Cloner:
                 self.save(data,dest)
                 item["src"] = dest if not base else "/"+dest
             except:
-                pass
-        
+                print(f"failed at saving data from url:{url} at {dest}")
         return str(soup)
 
     def findInputs(self,html):
@@ -133,7 +131,7 @@ class Cloner:
                 
         js = """
             function ___location() {
-                return window.location.href;
+                return window.location.href.match(/^(.*\/\/.*?)(\/.*?)$/)[1];
             }
 
             function ___params() {
